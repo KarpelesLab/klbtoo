@@ -35,7 +35,7 @@ LICENSE="MIT"
 # Dependent crate licenses
 LICENSE+=" MIT || ( Apache-2.0 MIT )"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="amd64 arm64"
 IUSE="ffi static-libs"
 REQUIRED_USE="static-libs? ( ffi )"
 

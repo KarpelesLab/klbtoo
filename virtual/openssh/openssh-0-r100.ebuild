@@ -9,7 +9,7 @@ EAPI=8
 DESCRIPTION="Virtual for net-misc/openssh and variants, including puressh"
 
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="amd64 arm64"
 IUSE="ssl"
 
 RDEPEND="

@@ -54,7 +54,7 @@ LICENSE="|| ( MIT Apache-2.0 )"
 # Dependent crate licenses
 LICENSE+=" MIT || ( Apache-2.0 MIT ) pam? ( MPL-2.0 )"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="amd64 arm64"
 IUSE="ffi +pam +server static-libs"
 REQUIRED_USE="
 	pam? ( server )
