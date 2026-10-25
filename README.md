@@ -40,15 +40,14 @@ modified `sshd_config` still pointing `Subsystem sftp` at OpenSSH's
 ## Bumping a package
 
 Packages build from the crates.io release (it ships `Cargo.lock`; the git
-tags do not). For a new version:
+tags do not). To move a package to its latest release:
 
 ```sh
-cd net-misc/rsurl
-git mv rsurl-0.1.21.ebuild rsurl-0.1.22.ebuild
-../../scripts/crates.py rsurl 0.1.22 ffi   # prints CRATES and dependency licenses
-# paste the CRATES block, adjust LICENSE+= if the license list changed
-ebuild rsurl-0.1.22.ebuild manifest
+scripts/bump.py net-misc/rsurl          # or: scripts/bump.py net-misc/rsurl 0.1.22
 ```
 
-Pass the cargo features the ebuild enables as the third argument
-(`server,pam,agent,ffi` for puressh) so the license list matches the build.
+This renames the ebuild, regenerates its `CRATES` block and dependency
+`LICENSE+=` line, runs `ebuild manifest` and stages the result in git
+(`--keep` keeps the old version). The licenses follow the cargo features
+declared on the ebuild's `# bump.py:` line, so update that line when the
+ebuild's features or USE flags change.
