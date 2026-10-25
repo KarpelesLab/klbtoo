@@ -1,0 +1,148 @@
+# Copyright 2026 Mark Karpeles
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=8
+
+CRATES="
+	autocfg@1.5.1
+	bitflags@2.13.2
+	bytes@1.12.1
+	cfg-if@1.0.5
+	cfg_aliases@0.2.2
+	compcol@0.7.6
+	futures-core@0.3.34
+	futures-io@0.3.34
+	futures-sink@0.3.34
+	futures-task@0.3.34
+	futures-util@0.3.34
+	hex@0.4.3
+	libc@0.2.191
+	memchr@2.8.3
+	memoffset@0.9.1
+	mio@1.2.4
+	nix@0.31.3
+	pam-client2@0.5.5
+	pam-sys2@1.0.2
+	pin-project-lite@0.2.17
+	proc-macro2@1.0.107
+	purecrypto@0.10.3
+	puressh@0.2.4
+	quote@1.0.47
+	rustversion@1.0.23
+	serde_core@1.0.229
+	serde_derive@1.0.229
+	slab@0.4.12
+	socket2@0.6.5
+	syn@3.0.9
+	tokio-util@0.7.20
+	tokio@1.54.1
+	unicode-ident@1.0.27
+	wasi@0.11.1+wasi-snapshot-preview1
+	windows-link@0.2.1
+	windows-sys@0.61.2
+"
+
+RUST_MIN_VER="1.95.0"
+
+inherit cargo pam systemd
+
+DESCRIPTION="Pure-Rust SSH client and server, a drop-in replacement for OpenSSH"
+HOMEPAGE="https://github.com/KarpelesLab/puressh"
+SRC_URI="${CARGO_CRATE_URIS}"
+
+LICENSE="|| ( MIT Apache-2.0 )"
+# Dependent crate licenses
+LICENSE+=" MIT || ( Apache-2.0 MIT ) pam? ( MPL-2.0 )"
+SLOT="0"
+KEYWORDS="~amd64 ~arm64"
+IUSE="ffi +pam +server static-libs"
+REQUIRED_USE="
+	pam? ( server )
+	static-libs? ( ffi )
+"
+
+# puressh installs the OpenSSH program names (and /etc/ssh configuration)
+# in their place; virtual/openssh in this overlay accepts it.
+DEPEND="pam? ( sys-libs/pam )"
+RDEPEND="
+	${DEPEND}
+	!net-misc/openssh
+	!net-misc/openssh-contrib
+	!net-misc/pkixssh
+"
+
+DOCS=( README.md CHANGELOG.md )
+
+# The C library is built without a SONAME upstream.
+QA_SONAME="usr/lib.*/libpuressh\.so"
+
+CLIENT_BINS=( ssh scp sftp ssh-add ssh-agent ssh-keygen ssh-keyscan )
+
+src_configure() {
+	local myfeatures=( agent $(usev server) $(usev pam) )
+	cargo_src_configure
+}
+
+src_compile() {
+	local bin bins=()
+	for bin in "${CLIENT_BINS[@]}" $(usev server sshd); do
+		bins+=( --bin "${bin}" )
+	done
+	cargo_src_compile "${bins[@]}"
+
+	if use ffi; then
+		local types=cdylib
+		use static-libs && types+=,staticlib
+		set -- "${CARGO}" rustc --lib $(usex debug "" --release) \
+			${ECARGO_ARGS[@]} --features ffi --crate-type "${types}"
+		einfo "${@}"
+		cargo_env "${@}" || die "cargo rustc failed"
+	fi
+}
+
+src_install() {
+	local dir=$(cargo_target_dir) bin
+	for bin in "${CLIENT_BINS[@]}"; do
+		dobin "${dir}/${bin}"
+	done
+	dobin scripts/ssh-copy-id
+
+	insinto /etc/ssh
+	newins "${FILESDIR}"/ssh_config ssh_config
+	insinto /etc/ssh/ssh_config.d
+	newins "${FILESDIR}"/ssh_config.gentoo.conf 9999999gentoo.conf
+
+	if use server; then
+		dosbin "${dir}"/sshd
+		newinitd "${FILESDIR}"/sshd.initd sshd
+		newconfd "${FILESDIR}"/sshd.confd sshd
+		systemd_newunit "${FILESDIR}"/sshd.service sshd.service
+
+		insinto /etc/ssh
+		newins "${FILESDIR}"/sshd_config sshd_config
+		insinto /etc/ssh/sshd_config.d
+		newins "${FILESDIR}"/sshd_config.gentoo.conf 9999999gentoo.conf
+		if use pam; then
+			newpamd "${FILESDIR}"/sshd.pamd sshd
+			newins "${FILESDIR}"/sshd_config.gentoo-pam.conf 9999999gentoo-pam.conf
+		fi
+	fi
+
+	if use ffi; then
+		dolib.so "${dir}"/libpuressh.so
+		use static-libs && dolib.a "${dir}"/libpuressh.a
+		doheader include/puressh.h
+	fi
+
+	einstalldocs
+}
+
+pkg_postinst() {
+	if use server; then
+		elog "sshd serves SFTP itself (internal-sftp); a Subsystem line that"
+		elog "points to OpenSSH's sftp-server in a modified sshd_config must be"
+		elog "changed to 'Subsystem sftp internal-sftp'."
+		elog "Host keys in /etc/ssh are kept and reused; check the configuration"
+		elog "with 'sshd -t' before restarting the service."
+	fi
+}

@@ -1,0 +1,4 @@
+# puressh sshd configuration (OpenSSH syntax), see sshd_config(5).
+# Settings given earlier win; put local overrides in sshd_config.d.
+
+Include /etc/ssh/sshd_config.d/*.conf

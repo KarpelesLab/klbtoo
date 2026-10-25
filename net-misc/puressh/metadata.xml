@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>magicaltux@gmail.com</email>
+		<name>Mark Karpeles</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">KarpelesLab/puressh</remote-id>
+		<remote-id type="crates-io">puressh</remote-id>
+	</upstream>
+	<use>
+		<flag name="ffi">Build and install the C library and header</flag>
+		<flag name="server">Build and install the sshd server with its init script and systemd unit</flag>
+	</use>
+</pkgmetadata>

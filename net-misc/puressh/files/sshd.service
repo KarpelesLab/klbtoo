@@ -1,0 +1,21 @@
+[Unit]
+Description=puressh SSH server daemon
+Documentation=https://github.com/KarpelesLab/puressh
+After=network.target auditd.service
+
+[Service]
+# sshd reports readiness through sd_notify, again after each SIGHUP re-exec.
+Type=notify
+ExecStartPre=/usr/bin/ssh-keygen -A
+ExecStartPre=/usr/sbin/sshd -t
+ExecStart=/usr/sbin/sshd -D -e
+ExecReload=/usr/sbin/sshd -t
+ExecReload=/bin/kill -HUP $MAINPID
+# Only the listener is stopped on restart: open sessions keep running.
+KillMode=process
+OOMPolicy=continue
+Restart=on-failure
+RestartSec=42s
+
+[Install]
+WantedBy=multi-user.target

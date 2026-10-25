@@ -1,0 +1,71 @@
+# Copyright 2026 Mark Karpeles
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=8
+
+CRATES="
+	bytes@1.12.1
+	cacrt@0.1.4
+	compcol@0.7.6
+	libc@0.2.191
+	mio@1.2.4
+	pin-project-lite@0.2.17
+	proc-macro2@1.0.107
+	purecrypto@0.10.3
+	quote@1.0.47
+	socket2@0.6.5
+	syn@3.0.9
+	tokio-macros@2.7.2
+	tokio@1.54.1
+	unicode-ident@1.0.27
+	wasi@0.11.1+wasi-snapshot-preview1
+	windows-link@0.2.1
+	windows-sys@0.61.2
+"
+
+RUST_MIN_VER="1.95.0"
+
+inherit cargo
+
+DESCRIPTION="Pure-Rust cryptography toolkit, from constant-time primitives to X.509 and TLS"
+HOMEPAGE="https://github.com/KarpelesLab/purecrypto"
+SRC_URI="${CARGO_CRATE_URIS}"
+
+LICENSE="MIT"
+# Dependent crate licenses
+LICENSE+=" MIT || ( Apache-2.0 MIT )"
+SLOT="0"
+KEYWORDS="~amd64 ~arm64"
+IUSE="ffi static-libs"
+REQUIRED_USE="static-libs? ( ffi )"
+
+DOCS=( README.md CHANGELOG.md )
+
+# The C library is built without a SONAME upstream.
+QA_SONAME="usr/lib.*/libpurecrypto\.so"
+
+src_compile() {
+	cargo_src_compile --bin purecrypto
+
+	if use ffi; then
+		local types=cdylib
+		use static-libs && types+=,staticlib
+		set -- "${CARGO}" rustc --lib $(usex debug "" --release) \
+			${ECARGO_ARGS[@]} --features ffi --crate-type "${types}"
+		einfo "${@}"
+		cargo_env "${@}" || die "cargo rustc failed"
+	fi
+}
+
+src_install() {
+	local dir=$(cargo_target_dir)
+	dobin "${dir}"/purecrypto
+
+	if use ffi; then
+		dolib.so "${dir}"/libpurecrypto.so
+		use static-libs && dolib.a "${dir}"/libpurecrypto.a
+		doheader include/purecrypto.h
+	fi
+
+	einstalldocs
+}

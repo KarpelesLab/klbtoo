@@ -1,0 +1,4 @@
+# puressh client configuration (OpenSSH syntax), see ssh_config(5).
+# Settings given earlier win; put local overrides in ssh_config.d.
+
+Include /etc/ssh/ssh_config.d/*.conf
