@@ -4,8 +4,9 @@
 usage: scripts/bump.py CATEGORY/PN [VERSION] [--keep]
 
 Copies the newest ebuild of CATEGORY/PN to VERSION (default: the latest
-stable release on crates.io), rewrites its CRATES block and the dependency
-LICENSE+= line from that release's Cargo.lock, and runs `ebuild manifest`.
+stable release on crates.io), rewrites its CRATES block, its LICENSE= line
+(the crate's own license) and the dependency LICENSE+= line from that
+release, and runs `ebuild manifest`.
 The previous ebuild is removed unless --keep is given; giving the current
 version regenerates that ebuild in place.
 
@@ -157,6 +158,8 @@ def main():
         root = f"{tmp}/{pn}-{version}"
         with open(f"{root}/Cargo.lock", "rb") as f:
             lock = tomllib.load(f)
+        with open(f"{root}/Cargo.toml", "rb") as f:
+            own = spdx_to_gentoo(tomllib.load(f)["package"]["license"])
         # Every registry package in Cargo.lock, the package itself included
         # so cargo.eclass unpacks it as ${S}.
         crates = {
@@ -177,6 +180,9 @@ def main():
     text, n = re.subn(r'^CRATES="[^"]*"', lambda _: block, text, flags=re.M)
     if n != 1:
         sys.exit(f"{old.name}: CRATES block not found")
+    text, n = re.subn(r'^LICENSE=".*"$', lambda _: f'LICENSE="{own}"', text, flags=re.M)
+    if n != 1:
+        sys.exit(f"{old.name}: LICENSE= line not found")
     text, n = re.subn(
         r'^(# bump\.py: .*\n)LICENSE\+=".*"$',
         lambda m: f'{m.group(1)}LICENSE+=" {" ".join(license)}"',
