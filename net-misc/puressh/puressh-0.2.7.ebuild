@@ -134,9 +134,6 @@ pkg_postinst() {
 	optfeature "FIDO security keys (sk-* keys)" dev-libs/libfido2
 
 	if use server; then
-		elog "sshd serves SFTP itself (internal-sftp); a Subsystem line that"
-		elog "points to OpenSSH's sftp-server in a modified sshd_config must be"
-		elog "changed to 'Subsystem sftp internal-sftp'."
 		elog "Host keys in /etc/ssh are kept and reused; check the configuration"
 		elog "with 'sshd -t' before restarting the service."
 	fi

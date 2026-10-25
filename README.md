@@ -33,9 +33,7 @@ packages depending on OpenSSH keep working. To switch:
 emerge -av --oneshot net-misc/puressh   # portage removes net-misc/openssh
 ```
 
-Existing host keys in `/etc/ssh` are reused. sshd serves SFTP itself: a
-modified `sshd_config` still pointing `Subsystem sftp` at OpenSSH's
-`sftp-server` must be changed to `internal-sftp`.
+Existing host keys and `sshd_config` in `/etc/ssh` are reused as they are.
 
 ## Bumping a package
 
