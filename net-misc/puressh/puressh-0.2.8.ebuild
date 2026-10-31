@@ -23,8 +23,8 @@ CRATES="
 	mio@1.2.4
 	nix@0.31.3
 	pin-project-lite@0.2.17
-	purecrypto@0.10.3
-	puressh@0.2.7
+	purecrypto@0.10.4
+	puressh@0.2.8
 	slab@0.4.12
 	socket2@0.6.5
 	tokio-util@0.7.20
