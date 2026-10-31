@@ -11,7 +11,7 @@ CRATES="
 	mio@1.2.4
 	pin-project-lite@0.2.17
 	proc-macro2@1.0.107
-	purecrypto@0.10.3
+	purecrypto@0.10.4
 	quote@1.0.47
 	socket2@0.6.5
 	syn@3.0.9
